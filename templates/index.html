@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customerflow Monitoring</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(120deg, #4a148c, #ff6f61, #ffca28);
+            background-size: 300% 300%;
+            animation: gradientMove 10s ease infinite;
+            color: #fff;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            position: relative;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+            z-index: 1; /* Ensure it's above the background */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            animation: slideUp 1s ease-in-out;
+        }
+
+        @keyframes slideUp {
+            0% { transform: translateY(50px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        .card h1 {
+            margin: 0;
+            font-size: 2.5em;
+            color: #ffca28;
+        }
+
+        .card p {
+            margin: 15px 0 20px;
+            font-size: 1.2em;
+            color: #eee;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #ffca28;
+            color: #333;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1em;
+            border-radius: 30px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .btn:hover {
+            background: #ff6f61;
+            color: #fff;
+            transform: scale(1.05);
+        }
+
+        .upload-section, .prediction-section {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            max-width: 700px;
+            width: 90%;
+        }
+
+        .upload-button {
+            display: inline-block;
+            background: #4a148c;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1em;
+            border-radius: 30px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .upload-button:hover {
+            background: #ff6f61;
+            transform: scale(1.05);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-preview img, .upload-preview video {
+            max-width: 100%;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .predict-output img, .predict-output video {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .card h1 {
+                font-size: 2em;
+            }
+            .card p {
+                font-size: 1em;
+            }
+            .btn, .upload-button {
+                padding: 10px 20px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Customerflow Monitoring</h1>
+        <p>A Machine Learning Detection System for Customerflow</p>
+        <a href="#" class="btn" onclick="showUploadSection()">Get Started</a>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="upload-section">
+        <h2>Upload Image/Video</h2>
+        <input type="file" id="file-input" name="file" accept=".png,.jpg,.jpeg,.mp4,.avi" onchange="previewFile()">
+        <button class="upload-button" onclick="document.getElementById('file-input').click()">Choose File</button>
+        <div class="upload-preview" id="uploadPreview"></div>
+        <button class="upload-button" onclick="submitForPrediction()">Predict</button>
+    </div>
+
+    <!-- Prediction Section -->
+    <div class="prediction-section">
+        <h2>Prediction Result</h2>
+        <div class="predict-output" id="predictOutput"></div>
+    </div>
+
+    <script>
+        // Existing script logic
+        function showUploadSection() {
+            document.querySelector('.container').style.display = 'none';
+            document.querySelector('.upload-section').style.display = 'block';
+        }
+
+        function previewFile() {
+            const fileInput = document.getElementById('file-input');
+            const preview = document.getElementById('uploadPreview');
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+
+            reader.onloadend = function () {
+                if (file.type.startsWith('image/')) {
+                    preview.innerHTML = `<img src="${reader.result}" alt="Uploaded Image">`;
+                } else if (file.type.startsWith('video/')) {
+                    preview.innerHTML = `<video controls><source src="${reader.result}" type="${file.type}">Your browser does not support the video tag.</video>`;
+                }
+            };
+        }
+
+        function submitForPrediction() {
+            const fileInput = document.getElementById('file-input');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert("Please upload a file first.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Send the file to the backend for prediction
+            fetch('/detect', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Show the predicted file (processed image or video)
+                const predictOutput = document.getElementById('predictOutput');
+                if (data.file_type === 'image') {
+                    predictOutput.innerHTML = `<img src="${data.processed_file}" alt="Processed Image">`;
+                } else if (data.file_type === 'video') {
+                    predictOutput.innerHTML = `<video controls><source src="${data.processed_file}" type="video/mp4">Your browser does not support the video tag.</video>`;
+                }
+
+                document.querySelector('.upload-section').style.display = 'none';
+                document.querySelector('.prediction-section').style.display = 'block';
+            })
+            .catch(error => {
+                console.error("Error during prediction:", error);
+            });
+        }
+    </script>
+</body>
+</html>
