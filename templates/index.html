@@ -163,63 +163,64 @@
 
     <script>
         // Existing script logic
-        function showUploadSection() {
-            document.querySelector('.container').style.display = 'none';
-            document.querySelector('.upload-section').style.display = 'block';
+       function showUploadSection() {
+    document.querySelector('.card').style.display = 'none'; // Hide the card
+    document.querySelector('.upload-section').style.display = 'block'; // Show the upload section
+}
+
+function previewFile() {
+    const fileInput = document.getElementById('file-input');
+    const preview = document.getElementById('uploadPreview');
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    if (file) {
+        reader.readAsDataURL(file);
+    }
+
+    reader.onloadend = function () {
+        if (file.type.startsWith('image/')) {
+            preview.innerHTML = `<img src="${reader.result}" alt="Uploaded Image">`;
+        } else if (file.type.startsWith('video/')) {
+            preview.innerHTML = `<video controls><source src="${reader.result}" type="${file.type}">Your browser does not support the video tag.</video>`;
+        }
+    };
+}
+
+function submitForPrediction() {
+    const fileInput = document.getElementById('file-input');
+    const file = fileInput.files[0];
+    if (!file) {
+        alert("Please upload a file first.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Send the file to the backend for prediction
+    fetch('/detect', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Show the predicted file (processed image or video)
+        const predictOutput = document.getElementById('predictOutput');
+        if (data.file_type === 'image') {
+            predictOutput.innerHTML = `<img src="${data.processed_file}" alt="Processed Image">`;
+        } else if (data.file_type === 'video') {
+            predictOutput.innerHTML = `<video controls><source src="${data.processed_file}" type="video/mp4">Your browser does not support the video tag.</video>`;
         }
 
-        function previewFile() {
-            const fileInput = document.getElementById('file-input');
-            const preview = document.getElementById('uploadPreview');
-            const file = fileInput.files[0];
-            const reader = new FileReader();
+        document.querySelector('.upload-section').style.display = 'none';
+        document.querySelector('.prediction-section').style.display = 'block';
+    })
+    .catch(error => {
+        console.error("Error during prediction:", error);
+    });
+}
 
-            if (file) {
-                reader.readAsDataURL(file);
-            }
-
-            reader.onloadend = function () {
-                if (file.type.startsWith('image/')) {
-                    preview.innerHTML = `<img src="${reader.result}" alt="Uploaded Image">`;
-                } else if (file.type.startsWith('video/')) {
-                    preview.innerHTML = `<video controls><source src="${reader.result}" type="${file.type}">Your browser does not support the video tag.</video>`;
-                }
-            };
-        }
-
-        function submitForPrediction() {
-            const fileInput = document.getElementById('file-input');
-            const file = fileInput.files[0];
-            if (!file) {
-                alert("Please upload a file first.");
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            // Send the file to the backend for prediction
-            fetch('/detect', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Show the predicted file (processed image or video)
-                const predictOutput = document.getElementById('predictOutput');
-                if (data.file_type === 'image') {
-                    predictOutput.innerHTML = `<img src="${data.processed_file}" alt="Processed Image">`;
-                } else if (data.file_type === 'video') {
-                    predictOutput.innerHTML = `<video controls><source src="${data.processed_file}" type="video/mp4">Your browser does not support the video tag.</video>`;
-                }
-
-                document.querySelector('.upload-section').style.display = 'none';
-                document.querySelector('.prediction-section').style.display = 'block';
-            })
-            .catch(error => {
-                console.error("Error during prediction:", error);
-            });
-        }
     </script>
 </body>
 </html>
